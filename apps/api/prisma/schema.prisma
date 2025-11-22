@@ -148,6 +148,7 @@ model HelperSkill {
   categoryId      String
   category        Category      @relation(fields: [categoryId], references: [id])
   hourlyRate      Int
+  serviceDescription String?    @db.VarChar(200)
   createdAt       DateTime      @default(now())
 
   @@unique([helperProfileId, categoryId])
