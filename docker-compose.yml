@@ -1,0 +1,109 @@
+# ================================
+# Khedma - Docker Compose Configuration
+# ================================
+# Usage:
+#   Development: docker-compose up
+#   Production:  docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+# ================================
+
+version: '3.8'
+
+services:
+  # ================================
+  # PostgreSQL Database
+  # ================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: khedma-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: khedma
+      POSTGRES_PASSWORD: khedma_password
+      POSTGRES_DB: khedma
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U khedma -d khedma"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ================================
+  # NestJS API Backend
+  # ================================
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: development
+    container_name: khedma-api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://khedma:khedma_password@postgres:5432/khedma
+      JWT_SECRET: khedma-docker-jwt-secret-dev-2024
+      JWT_REFRESH_SECRET: khedma-docker-jwt-refresh-secret-dev-2024
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      PORT: 3001
+    volumes:
+      # Mount source code for hot reloading
+      - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/prisma:/app/apps/api/prisma
+      - ./packages/shared/src:/app/packages/shared/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        pnpm exec prisma db push --skip-generate &&
+        pnpm exec prisma db seed || true &&
+        pnpm dev
+      "
+
+  # ================================
+  # Next.js Web Frontend
+  # ================================
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: development
+    container_name: khedma-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+    volumes:
+      # Mount source code for hot reloading
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/public:/app/apps/web/public
+      - ./packages/shared/src:/app/packages/shared/src
+    depends_on:
+      - api
+
+  # ================================
+  # Adminer - Database Management UI (optional)
+  # ================================
+  adminer:
+    image: adminer:latest
+    container_name: khedma-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: khedma-network

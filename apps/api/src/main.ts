@@ -12,16 +12,18 @@ async function bootstrap() {
   // Security
   app.use(helmet());
 
-  // CORS
-  const corsOrigins = configService.get<string>('CORS_ORIGINS')?.split(',') || [];
+  // CORS - allow all origins in development
+  const isDev = configService.get<string>('NODE_ENV') !== 'production';
   app.enableCors({
-    origin: corsOrigins,
+    origin: isDev ? true : configService.get<string>('CORS_ORIGINS')?.split(',') || [],
     credentials: true,
   });
 
-  // Global prefix
+  // Global prefix (exclude health controller)
   const apiPrefix = configService.get<string>('API_PREFIX') || 'api/v1';
-  app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix(apiPrefix, {
+    exclude: ['/'],
+  });
 
   // Validation pipe
   app.useGlobalPipes(

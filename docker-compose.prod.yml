@@ -1,0 +1,42 @@
+# ================================
+# Khedma - Production Docker Compose Override
+# ================================
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ================================
+
+version: '3.8'
+
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+    restart: always
+
+  api:
+    build:
+      target: production
+    restart: always
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+    volumes: []  # No volume mounts in production
+    command: node dist/main.js
+
+  web:
+    build:
+      target: production
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    restart: always
+    environment:
+      NODE_ENV: production
+    volumes: []  # No volume mounts in production
+    command: pnpm start
+
+  # Disable adminer in production
+  adminer:
+    profiles:
+      - debug

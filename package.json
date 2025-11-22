@@ -19,7 +19,14 @@
     "db:push": "pnpm --filter @khedma/api prisma db push",
     "db:migrate": "pnpm --filter @khedma/api prisma migrate dev",
     "db:studio": "pnpm --filter @khedma/api prisma studio",
-    "db:seed": "pnpm --filter @khedma/api prisma db seed"
+    "db:seed": "pnpm --filter @khedma/api prisma db seed",
+    "check-env": "bash scripts/check-env.sh",
+    "docker:up": "docker compose up",
+    "docker:up:d": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build",
+    "docker:logs": "docker compose logs -f",
+    "docker:reset": "docker compose down -v && docker compose up --build"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
