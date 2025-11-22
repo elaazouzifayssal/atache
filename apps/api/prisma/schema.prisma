@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  CLIENT
+  HELPER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum JobStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  PENDING_REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum BudgetType {
+  FIXED
+  HOURLY
+}
+
+enum TimePreference {
+  MORNING
+  AFTERNOON
+  EVENING
+  FLEXIBLE
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum NotificationType {
+  NEW_JOB
+  NEW_APPLICATION
+  APPLICATION_ACCEPTED
+  APPLICATION_DECLINED
+  NEW_MESSAGE
+  JOB_REMINDER
+  JOB_STARTED
+  JOB_COMPLETED
+  NEW_REVIEW
+  JOB_CANCELLED
+}
+
+// ============================================
+// CORE MODELS
+// ============================================
+
+model User {
+  id            String     @id @default(uuid())
+  phone         String     @unique
+  email         String?    @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  avatarUrl     String?
+  role          UserRole   @default(CLIENT)
+  status        UserStatus @default(PENDING_VERIFICATION)
+  city          String
+  neighborhood  String?
+  phoneVerified Boolean    @default(false)
+  emailVerified Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  lastLoginAt   DateTime?
+
+  addresses      Address[]
+  helperProfile  HelperProfile?
+  jobsAsClient   Job[]                     @relation("ClientJobs")
+  applications   Application[]             @relation("HelperApplications")
+  reviewsGiven   Review[]                  @relation("ReviewsGiven")
+  reviewsReceived Review[]                 @relation("ReviewsReceived")
+  conversations  ConversationParticipant[]
+  messages       Message[]
+  notifications  Notification[]
+  deviceTokens   DeviceToken[]
+
+  @@index([phone])
+  @@index([city])
+  @@index([role])
+  @@map("users")
+}
+
+model HelperProfile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                String   @db.VarChar(500)
+  yearsExperience    Int?
+  workRadius         Int      @default(10)
+  isAvailable        Boolean  @default(true)
+  isVerified         Boolean  @default(false)
+  latitude           Float?
+  longitude          Float?
+  averageRating      Float    @default(0)
+  totalReviews       Int      @default(0)
+  totalJobsCompleted Int      @default(0)
+  responseRate       Float    @default(0)
+  portfolioPhotos    String[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  skills       HelperSkill[]
+  availability HelperAvailability[]
+
+  @@index([isAvailable, isVerified])
+  @@index([latitude, longitude])
+  @@map("helper_profiles")
+}
+
+model HelperSkill {
+  id              String        @id @default(uuid())
+  helperProfileId String
+  helperProfile   HelperProfile @relation(fields: [helperProfileId], references: [id], onDelete: Cascade)
+  categoryId      String
+  category        Category      @relation(fields: [categoryId], references: [id])
+  hourlyRate      Int
+  createdAt       DateTime      @default(now())
+
+  @@unique([helperProfileId, categoryId])
+  @@map("helper_skills")
+}
+
+model HelperAvailability {
+  id              String        @id @default(uuid())
+  helperProfileId String
+  helperProfile   HelperProfile @relation(fields: [helperProfileId], references: [id], onDelete: Cascade)
+  dayOfWeek       DayOfWeek
+  startTime       String
+  endTime         String
+  isAvailable     Boolean       @default(true)
+
+  @@unique([helperProfileId, dayOfWeek])
+  @@map("helper_availability")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  nameFr      String
+  nameAr      String
+  icon        String
+  description String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  helperSkills HelperSkill[]
+  jobs         Job[]
+
+  @@map("categories")
+}
+
+model Address {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label        String
+  street       String
+  city         String
+  neighborhood String?
+  postalCode   String?
+  latitude     Float
+  longitude    Float
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  jobs Job[]
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model Job {
+  id                 String         @id @default(uuid())
+  clientId           String
+  client             User           @relation("ClientJobs", fields: [clientId], references: [id])
+  title              String         @db.VarChar(100)
+  description        String         @db.VarChar(1000)
+  categoryId         String
+  category           Category       @relation(fields: [categoryId], references: [id])
+  addressId          String
+  address            Address        @relation(fields: [addressId], references: [id])
+  latitude           Float
+  longitude          Float
+  preferredDate      DateTime       @db.Date
+  timePreference     TimePreference
+  budgetType         BudgetType
+  budgetAmount       Int
+  photos             String[]
+  status             JobStatus      @default(OPEN)
+  assignedHelperId   String?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  applications Application[]
+  review       Review?
+  conversation Conversation?
+
+  @@index([clientId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([preferredDate])
+  @@index([latitude, longitude])
+  @@map("jobs")
+}
+
+model Application {
+  id           String            @id @default(uuid())
+  jobId        String
+  job          Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  helperId     String
+  helper       User              @relation("HelperApplications", fields: [helperId], references: [id])
+  message      String?           @db.VarChar(300)
+  proposedRate Int?
+  status       ApplicationStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([jobId, helperId])
+  @@index([helperId])
+  @@index([status])
+  @@map("applications")
+}
+
+model Review {
+  id                  String   @id @default(uuid())
+  jobId               String   @unique
+  job                 Job      @relation(fields: [jobId], references: [id])
+  reviewerId          String
+  reviewer            User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId          String
+  reviewee            User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  overallRating       Int
+  punctualityRating   Int?
+  qualityRating       Int?
+  communicationRating Int?
+  valueRating         Int?
+  comment             String?  @db.VarChar(500)
+  isClientReview      Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([revieweeId])
+  @@index([reviewerId])
+  @@map("reviews")
+}
+
+model Conversation {
+  id            String   @id @default(uuid())
+  jobId         String   @unique
+  job           Job      @relation(fields: [jobId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastMessageAt DateTime @default(now())
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  lastReadAt     DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  content        String       @db.VarChar(1000)
+  imageUrl       String?
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("device_tokens")
+}
+
+model OtpCode {
+  id          String    @id @default(uuid())
+  phone       String
+  code        String
+  purpose     String
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([phone, purpose])
+  @@map("otp_codes")
+}
