@@ -1,30 +1,27 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import { api, categoriesApi } from '@/lib/api';
 
-// Icons (using emoji for simplicity - could be replaced with icon library)
-const ICONS = {
-  user: '👤',
-  phone: '📱',
-  email: '✉️',
-  location: '🏙️',
-  experience: '⭐',
-  radius: '📍',
-  availability: '🟢',
-  skills: '🛠️',
-  bio: '📝',
-  edit: '✏️',
-  save: '💾',
-  cancel: '❌',
-  add: '➕',
-  remove: '🗑️',
-  back: '⬅️',
-  verified: '✅',
-  money: '💰'
+// Competency icons mapping
+const COMPETENCY_ICONS: Record<string, string> = {
+  'menage': '🧹',
+  'bricolage': '🔧',
+  'montage-meubles': '🪑',
+  'jardinage': '🌱',
+  'demenagement': '🚛',
+  'informatique': '💻',
+  'garde-enfants': '👶',
+  'cours-particuliers': '📚',
+  'plomberie': '🔩',
+  'electricite': '⚡',
+  'peinture': '🎨',
+  'climatisation': '❄️',
+  'nettoyage-auto': '🚗',
+  'livraison': '📦',
+  'cuisine': '👨‍🍳'
 };
 
 const MAROCCAN_CITIES = [
@@ -33,7 +30,6 @@ const MAROCCAN_CITIES = [
 ];
 
 export default function ProfilePage() {
-  const router = useRouter();
   const { user, isAuthenticated, setAuth } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,7 +49,7 @@ export default function ProfilePage() {
     workRadius: 10,
     isAvailable: true,
     avatarPreview: undefined as string | undefined,
-    selectedCompétences: [] as string[],
+    selectedCompetences: [] as string[],
     skills: [] as { categoryId: string; category?: any; hourlyRate: number; serviceDescription?: string }[]
   });
 
@@ -82,7 +78,7 @@ export default function ProfilePage() {
         phone: user.phone,
         email: (user as any).email || '',
         city: user.city,
-        selectedCompétences: (user as any).selectedCompétences || [],
+        selectedCompetences: (user as any).selectedCompetences || [],
       }));
 
       // Load existing helper profile if available
@@ -170,7 +166,7 @@ export default function ProfilePage() {
         lastName: formData.lastName,
         city: formData.city,
         email: formData.email,
-        selectedCompétences: formData.selectedCompétences || [],
+        selectedCompetences: formData.selectedCompetences || [],
       };
 
       // For helpers, include helper profile data and skills
@@ -203,14 +199,14 @@ export default function ProfilePage() {
   const canEditProfile = isAuthenticated && user;
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
-          <Link href="/" className="text-red-600 hover:underline text-sm mb-4 block">
+        <div className="mb-6">
+          <Link href="/" className="text-red-600 hover:underline text-sm mb-4 inline-block">
             ← Retour à l'accueil
           </Link>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 {canEditProfile ? 'Mon Profil' : 'Profil'}
@@ -222,363 +218,250 @@ export default function ProfilePage() {
             {canEditProfile && (
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className={`px-4 py-2 rounded-lg transition font-medium ${
-                  isEditing ? 'bg-gray-300 text-gray-700' : 'bg-red-600 text-white hover:bg-red-700'
+                className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                  isEditing
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg'
                 }`}
               >
-                {isEditing ? 'Annuler' : '✏️ Modifier'}
+                {isEditing ? '✕ Annuler' : '✏️ Modifier'}
               </button>
             )}
           </div>
-
-          {!canEditProfile && (
-            <div className="bg-red-50 text-red-900 p-4 rounded-lg text-sm mt-4 border border-red-200">
-              <p>🔑 Connectez-vous pour accéder et modifier votre profil personnel.</p>
-              <Link href="/login" className="text-red-600 font-medium hover:underline">
-                Se connecter →
-              </Link>
-            </div>
-          )}
         </div>
 
         {/* Success/Error Messages */}
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-6 border border-red-200">
-            {error}
+          <div className="bg-red-50 text-red-700 p-4 rounded-xl mb-6 border border-red-200">
+            ⚠️ {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-50 text-green-600 p-4 rounded-lg text-sm mb-6 border border-green-200">
-            {success}
+          <div className="bg-green-50 text-green-700 p-4 rounded-xl mb-6 border border-green-200">
+            ✅ {success}
           </div>
         )}
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Avatar Section */}
-          <div className="flex flex-col items-center space-y-4">
-            <div className="relative">
-              <div
-                onClick={() => isEditing && fileInputRef.current?.click()}
-                className={`w-32 h-32 bg-red-100 rounded-full flex items-center justify-center cursor-pointer ${
-                  isEditing ? 'hover:bg-red-200 transition border-4 border-red-300' : ''
-                }`}
-              >
-                {formData.avatarPreview ? (
-                  <img
-                    src={formData.avatarPreview}
-                    alt="Avatar"
-                    className="w-32 h-32 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-5xl">👷‍♂️</span>
-                )}
-              </div>
-              {isEditing && (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700"
-                >
-                  📷
-                </button>
-              )}
-            </div>
-
-            {isEditing && (
-              <p className="text-xs text-red-600 text-center">
-                Cliquez pour changer la photo de profil
-              </p>
-            )}
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        {/* Personal Information Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 mb-8">
-          <div className="flex items-center space-x-3 mb-6">
-            <span className="text-2xl">{ICONS.user}</span>
-            <h2 className="text-xl font-bold text-gray-900">Informations Personnelles</h2>
-          </div>
-
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 flex items-center">
-                  Prénom
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    className="input w-full"
-                  />
-                ) : (
-                  <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
-                    {formData.firstName || '(non défini)'}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 flex items-center">
-                  Nom
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    className="input w-full"
-                  />
-                ) : (
-                  <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
-                    {formData.lastName || '(non défini)'}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 flex items-center">
-                <span className="mr-2">{ICONS.phone}</span>
-                Téléphone
-              </label>
-              <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-600">
-                {formData.phone || '(non défini)'}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 flex items-center">
-                <span className="mr-2">{ICONS.email}</span>
-                Email
-              </label>
-              {isEditing ? (
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="input w-full"
-                  placeholder="votre@email.com"
-                />
-              ) : (
-                <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
-                  {formData.email || '(non défini)'}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 flex items-center">
-                <span className="mr-2">{ICONS.location}</span>
-                Ville de travail
-              </label>
-              {isEditing ? (
-                <select
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  className="input w-full"
-                >
-                  {MAROCCAN_CITIES.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
-                  {formData.city || 'Casablanca'}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* My Competences Section - What I'm Good At */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-          <div className="flex items-center space-x-3 mb-6">
-            <span className="text-2xl">{ICONS.skills}</span>
-            <h2 className="text-xl font-bold text-gray-900">Mes Compétences</h2>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center">
-                <span className="mr-2">💪</span>
-                Ce que je maîtrise (sélectionnez vos compétences)
-              </label>
-
-              {isEditing ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {categories.map((category) => (
-                    <label key={category.id} className="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:border-red-300 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={formData.selectedCompétences?.includes(category.id) || false}
-                        onChange={(e) => {
-                          const newCompétences = e.target.checked
-                            ? [...(formData.selectedCompétences || []), category.id]
-                            : (formData.selectedCompétences || []).filter(id => id !== category.id);
-                          handleInputChange('selectedCompétences', newCompétences);
-                        }}
-                        className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">{category.nameFr}</span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-gradient-to-r from-red-50 to-pink-50 p-4 rounded-xl border border-red-200">
-                  {formData.selectedCompétences && formData.selectedCompétences.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.selectedCompétences.map((categoryId) => {
-                        const category = categories.find(cat => cat.id === categoryId);
-                        return category ? (
-                          <span
-                            key={categoryId}
-                            className="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full"
-                          >
-                            {category.nameFr}
-                          </span>
-                        ) : null;
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center text-red-600 font-medium">
-                      Aucune compétence sélectionnée
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Professional Information Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-            <div className="flex items-center space-x-3 mb-6">
-              <span className="text-2xl">{ICONS.skills}</span>
-              <h2 className="text-xl font-bold text-gray-900">Informations Professionnelles</h2>
-            </div>
-
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 flex items-center">
-                    Prénom
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className="input w-full"
-                    />
-                  ) : (
-                    <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
-                      {formData.firstName || '(non défini)'}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 flex items-center">
-                    Nom
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      className="input w-full"
-                    />
-                  ) : (
-                    <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
-                      {formData.lastName || '(non défini)'}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 flex items-center">
-                  <span className="mr-2">{ICONS.phone}</span>
-                  Téléphone
-                </label>
-                <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-600">
-                  {formData.phone || '(non défini)'}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 flex items-center">
-                  <span className="mr-2">{ICONS.email}</span>
-                  Email
-                </label>
-                {isEditing ? (
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="input w-full"
-                    placeholder="votre@email.com"
-                  />
-                ) : (
-                  <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
-                    {formData.email || '(non défini)'}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 flex items-center">
-                  <span className="mr-2">{ICONS.location}</span>
-                  Ville de travail
-                </label>
-                {isEditing ? (
-                  <select
-                    value={formData.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                    className="input w-full"
-                  >
-                    {MAROCCAN_CITIES.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
-                    {formData.city || 'Casablanca'}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Professional Information Card */}
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-            <div className="flex items-center space-x-3 mb-6">
-              <span className="text-2xl">{ICONS.skills}</span>
-              <h2 className="text-xl font-bold text-gray-900">Informations Professionnelles</h2>
+            <div className="flex flex-col items-center justify-center space-y-6">
+              <div className="relative">
+                <div
+                  onClick={() => isEditing && fileInputRef.current?.click()}
+                  className={`w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-red-200 to-red-300 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isEditing ? 'cursor-pointer hover:shadow-xl border-4 border-red-400 hover:scale-105' : ''
+                  }`}
+                >
+                  {formData.avatarPreview ? (
+                    <img
+                      src={formData.avatarPreview}
+                      alt="Avatar"
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-3xl md:text-5xl">👷‍♂️</span>
+                  )}
+                </div>
+                {isEditing && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -bottom-2 -right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 shadow-lg transition-colors text-sm"
+                  >
+                    📷
+                  </button>
+                )}
+              </div>
+
+              {isEditing && (
+                <p className="text-sm text-red-600 text-center font-medium">
+                  Cliquez sur la photo pour modifier
+                </p>
+              )}
+
+              <h2 className="text-2xl font-bold text-gray-900">
+                {formData.firstName} {formData.lastName}
+              </h2>
+              <p className="text-gray-600">
+                {formData.city}, Maroc
+              </p>
+            </div>
+          </div>
+
+          {/* Main Information Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Personal Information */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+              <div className="flex items-center space-x-3 mb-6">
+                <span className="text-2xl">👤</span>
+                <h3 className="text-xl font-bold text-gray-900">Informations Personnelles</h3>
+              </div>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange('firstName', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <p className="px-4 py-3 bg-gray-50 rounded-xl text-gray-900 font-medium">
+                        {formData.firstName || '(non défini)'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <p className="px-4 py-3 bg-gray-50 rounded-xl text-gray-900 font-medium">
+                        {formData.lastName || '(non défini)'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">📱 Téléphone</label>
+                  <p className="px-4 py-3 bg-gray-50 rounded-xl text-gray-600">
+                    {formData.phone || '(non défini)'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">✉️ Email</label>
+                  {isEditing ? (
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="votre@email.com"
+                    />
+                  ) : (
+                    <p className="px-4 py-3 bg-gray-50 rounded-xl text-gray-900 font-medium">
+                      {formData.email || '(non défini)'}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">🏙️ Ville de travail</label>
+                  {isEditing ? (
+                    <select
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      {MAROCCAN_CITIES.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="px-4 py-3 bg-gray-50 rounded-xl text-gray-900 font-medium">
+                      {formData.city || 'Casablanca'}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {(user?.role === 'HELPER') && (
+            {/* Competences Section */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+              <div className="flex items-center space-x-3 mb-6">
+                <span className="text-2xl">🛠️</span>
+                <h3 className="text-xl font-bold text-gray-900">Mes Compétences</h3>
+              </div>
+
+              <div className="space-y-4">
+                {isEditing ? (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-4">
+                      💪 Sélectionnez vos compétences :
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                      {categories.map((category) => (
+                        <label
+                          key={category.id}
+                          className="flex items-center space-x-3 p-4 border border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50 cursor-pointer transition-all duration-200"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.selectedCompetences?.includes(category.id) || false}
+                            onChange={(e) => {
+                              const newCompetences = e.target.checked
+                                ? [...(formData.selectedCompetences || []), category.id]
+                                : (formData.selectedCompetences || []).filter(id => id !== category.id);
+                              handleInputChange('selectedCompetences', newCompetences);
+                            }}
+                            className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                          />
+                          <span className="text-lg">{COMPETENCY_ICONS[category.slug] || '🔧'}</span>
+                          <span className="text-sm font-medium text-gray-700">{category.nameFr}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-4">
+                      Compétences sélectionnées :
+                    </p>
+                    <div className="bg-gradient-to-r from-red-50 to-pink-50 p-6 rounded-xl border border-red-200">
+                      {formData.selectedCompetences && formData.selectedCompetences.length > 0 ? (
+                        <div className="flex flex-wrap gap-3">
+                          {formData.selectedCompetences.map((categoryId) => {
+                            const category = categories.find(cat => cat.id === categoryId);
+                            const emoji = category ? COMPETENCY_ICONS[category.slug] || '🔧' : '🔧';
+                            return category ? (
+                              <div
+                                key={categoryId}
+                                className="flex items-center space-x-2 px-4 py-2 bg-white border border-red-200 text-red-800 text-sm font-medium rounded-full shadow-sm"
+                              >
+                                <span className="text-base">{emoji}</span>
+                                <span>{category.nameFr}</span>
+                              </div>
+                            ) : null;
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-center text-red-600 font-medium py-4">
+                          <div className="text-4xl mb-2">🤔</div>
+                          Aucune compétence sélectionnée
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Professional Information - Only for Helpers */}
+          {user?.role === 'HELPER' && (
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+              <div className="flex items-center space-x-3 mb-6">
+                <span className="text-2xl">⭐</span>
+                <h3 className="text-xl font-bold text-gray-900">Informations Professionnelles</h3>
+              </div>
+
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center">
-                      <span className="mr-2">{ICONS.experience}</span>
-                      Expérience
-                    </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">⭐ Expérience</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -586,23 +469,20 @@ export default function ProfilePage() {
                         max="50"
                         value={formData.yearsExperience}
                         onChange={(e) => handleInputChange('yearsExperience', e.target.value)}
-                        className="input w-full"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="5"
                       />
                     ) : (
-                      <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-100 rounded-xl text-gray-900 font-medium">
+                      <p className="px-4 py-3 bg-amber-50 rounded-xl text-gray-900 font-medium">
                         {formData.yearsExperience || '0'} ans d'expérience
-                      </div>
+                      </p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center">
-                      <span className="mr-2">{ICONS.radius}</span>
-                      Rayon d'intervention
-                    </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">📍 Rayon d'intervention</label>
                     {isEditing ? (
-                      <div className="space-y-2 p-3 bg-gray-50 rounded-xl">
+                      <div className="space-y-3 p-4 bg-gray-50 rounded-xl">
                         <input
                           type="range"
                           min="1"
@@ -618,14 +498,14 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl text-gray-900 font-medium">
+                      <p className="px-4 py-3 bg-green-50 rounded-xl text-gray-900 font-medium">
                         {formData.workRadius} km de rayon
-                      </div>
+                      </p>
                     )}
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div>
                   <label className="flex items-center space-x-3">
                     <input
                       type="checkbox"
@@ -635,65 +515,56 @@ export default function ProfilePage() {
                       disabled={!isEditing}
                     />
                     <div className="flex items-center space-x-2">
-                      <span className="text-lg">{formData.isAvailable ? ICONS.availability : '🚫'}</span>
+                      <span className="text-lg">{formData.isAvailable ? '🟢' : '🔴'}</span>
                       <span className="text-sm font-medium text-gray-700">
                         Disponible pour de nouveaux projets
                       </span>
                     </div>
                   </label>
-                  <p className={`text-xs ml-8 ${
-                    formData.isAvailable ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {formData.isAvailable ? '✓ Acceptant de nouvelles missions' : '✗ Indisponible pour le moment'}
+                  <p className={`text-xs ml-8 ${formData.isAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                    {formData.isAvailable ? '✅ Acceptant de nouvelles missions' : '❌ Indisponible pour le moment'}
                   </p>
                 </div>
-              </div>
-            )}
 
-            {/* Bio Section */}
-            {(user?.role === 'HELPER' || canEditProfile) && (
-              <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
-                <label className="block text-sm font-medium text-gray-700 flex items-center">
-                  <span className="mr-2">{ICONS.bio}</span>
-                  Présentation professionnelle
-                </label>
-                {isEditing ? (
-                  <textarea
-                    value={formData.bio}
-                    onChange={(e) => handleInputChange('bio', e.target.value)}
-                    placeholder="Présentez-vous brièvement, mettez en avant vos compétences et votre expérience..."
-                    className="input w-full min-h-[100px] resize-none"
-                    maxLength={500}
-                  />
-                ) : (
-                  <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-100 rounded-xl text-gray-900 min-h-[100px]">
-                    {formData.bio || '(présentation non écrite)'}
-                  </div>
-                )}
-                <p className="text-xs text-gray-500">
-                  {(formData.bio?.length || 0)}/500 caractères
-                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">📝 Présentation professionnelle</label>
+                  {isEditing ? (
+                    <textarea
+                      value={formData.bio}
+                      onChange={(e) => handleInputChange('bio', e.target.value)}
+                      placeholder="Décrivez-vous brièvement, mettez en avant vos compétences et votre expérience..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                      rows={4}
+                      maxLength={500}
+                    />
+                  ) : (
+                    <p className="px-4 py-3 bg-indigo-50 rounded-xl text-gray-900 min-h-[100px]">
+                      {formData.bio || '(présentation non écrite)'}
+                    </p>
+                  )}
+                  {isEditing && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {(formData.bio?.length || 0)}/500 caractères
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
 
-        {/* Skills Section for Helpers */}
-        {((canEditProfile && user?.role === 'HELPER') || (isAuthenticated && user?.role === 'HELPER' && formData.skills.length > 0)) && (
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 mt-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">{ICONS.skills}</span>
-                <h2 className="text-xl font-bold text-gray-900">Compétences & Tarifs</h2>
-              </div>
-              {formData.skills.length > 0 && (
+          {/* Skills Section for Helpers */}
+          {user?.role === 'HELPER' && canEditProfile && formData.skills.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">💰</span>
+                  <h3 className="text-xl font-bold text-gray-900">Compétences & Tarifs</h3>
+                </div>
                 <div className="text-sm text-gray-500">
                   {formData.skills.length} compétence{formData.skills.length > 1 ? 's' : ''} ajoutée{formData.skills.length > 1 ? 's' : ''}
                 </div>
-              )}
-            </div>
+              </div>
 
-            {formData.skills.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {formData.skills.map((skill) => (
                   <div key={skill.categoryId} className="bg-gradient-to-br from-red-50 to-pink-100 p-6 rounded-xl border border-red-200">
@@ -707,7 +578,7 @@ export default function ProfilePage() {
                             max="2000"
                             value={skill.hourlyRate}
                             onChange={(e) => updateSkillRate(skill.categoryId, parseInt(e.target.value))}
-                            className="input text-sm w-20 text-center border-red-300 focus:border-red-500"
+                            className="px-3 py-1 border border-red-300 rounded text-sm w-20 text-center focus:ring-red-500 focus:border-red-500"
                             placeholder="200"
                           />
                         ) : (
@@ -716,33 +587,31 @@ export default function ProfilePage() {
                         {isEditing && (
                           <button
                             onClick={() => removeSkill(skill.categoryId)}
-                            className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition-colors"
+                            className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded text-sm"
                           >
-                            {ICONS.remove}
+                            🗑️
                           </button>
                         )}
                       </div>
                     </div>
 
-                    <div className="space-y-3">
+                    <div>
                       {isEditing ? (
                         <textarea
                           value={skill.serviceDescription}
                           onChange={(e) => updateSkillDescription(skill.categoryId, e.target.value)}
                           placeholder={`Décrivez vos services pour ${skill.category?.nameFr?.toLowerCase()}...`}
-                          className="input w-full resize-none border-red-300 focus:border-red-500"
-                          rows={4}
+                          className="w-full px-3 py-2 border border-red-300 rounded text-sm focus:ring-red-500 focus:border-red-500 resize-none"
+                          rows={3}
                           maxLength={200}
                         />
                       ) : (
-                        <div className="text-sm text-gray-700 bg-white/60 p-3 rounded-lg min-h-[80px] border border-red-100">
-                          {skill.serviceDescription || (
-                            <span className="text-gray-500 italic">Aucune description fournie</span>
-                          )}
-                        </div>
+                        <p className="text-sm text-gray-700 bg-white/60 p-3 rounded border border-red-100 min-h-[60px]">
+                          {skill.serviceDescription || '(aucune description)'}
+                        </p>
                       )}
                       {isEditing && (
-                        <p className="text-xs text-red-600">
+                        <p className="text-xs text-red-600 mt-1">
                           {(skill.serviceDescription?.length || 0)}/200 caractères
                         </p>
                       )}
@@ -750,70 +619,76 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
-            ) : (
-              !isEditing && <div className="text-center py-12 text-red-500">Aucune compétence définie</div>
-            )}
 
-            {/* Add Skill Section */}
-            {isEditing && (
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <span className="text-xl">{ICONS.add}</span>
-                  <h3 className="text-lg font-semibold text-gray-900">Ajouter une compétence</h3>
-                </div>
+              {isEditing && (
+                <>
+                  <div className="mt-8 pt-6 border-t border-gray-200">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <span className="text-xl">➕</span>
+                      <h4 className="text-lg font-semibold text-gray-900">Ajouter une compétence</h4>
+                    </div>
 
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <select
-                    onChange={(e) => {
-                      const category = categories.find(cat => cat.id === e.target.value);
-                      if (category) {
-                        addSkill(category.id, category);
-                      }
-                      e.target.value = '';
-                    }}
-                    className="input w-full mb-4"
-                    value=""
-                  >
-                    <option value="">Sélectionnez une catégorie de service...</option>
-                    {categories
-                      .filter(cat => !formData.skills.some(skill => skill.categoryId === cat.id))
-                      .map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.nameFr}
-                        </option>
-                      ))}
-                  </select>
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <select
+                        onChange={(e) => {
+                          const category = categories.find(cat => cat.id === e.target.value);
+                          if (category) {
+                            addSkill(category.id, category);
+                          }
+                          e.target.value = '';
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent mb-4"
+                        value=""
+                      >
+                        <option value="">Sélectionnez une catégorie de service...</option>
+                        {categories
+                          .filter(cat => !formData.skills.some(skill => skill.categoryId === cat.id))
+                          .map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.nameFr}
+                            </option>
+                          ))}
+                      </select>
 
-                  <p className="text-sm text-gray-600">
-                    💡 Choisissez une catégorie puis ajoutez une description détaillée de vos services
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+                      <p className="text-sm text-gray-600">
+                        💡 Choisissez une catégorie puis ajoutez une description détaillée de vos services
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
-        {/* Edit Actions */}
-        {isEditing && (
-          <div className="mt-8 flex justify-center space-x-4">
-            <button
-              onClick={() => setIsEditing(false)}
-              className="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors shadow-lg"
-            >
-              <span className="mr-2">{ICONS.cancel}</span>
-              Annuler
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <span className="mr-2">{ICONS.save}</span>
-              {loading ? 'Enregistrement...' : 'Sauvegarder'}
-            </button>
-          </div>
-        )}
+          {/* Edit Actions */}
+          {isEditing && (
+            <div className="mt-8 flex justify-center space-x-6">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-8 py-4 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors shadow-lg"
+              >
+                ❌ Annuler
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                💾 {loading ? 'Enregistrement...' : 'Sauvegarder'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
       </div>
-    </main>
+    </div>
   );
 }
