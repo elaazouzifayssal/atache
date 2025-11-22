@@ -1,0 +1,34 @@
+{
+  "name": "khedma",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local jobbing marketplace for Morocco",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:api": "turbo dev --filter=@khedma/api",
+    "dev:web": "turbo dev --filter=@khedma/web",
+    "dev:mobile": "turbo dev --filter=@khedma/mobile",
+    "build": "turbo build",
+    "build:api": "turbo build --filter=@khedma/api",
+    "build:web": "turbo build --filter=@khedma/web",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @khedma/api prisma generate",
+    "db:push": "pnpm --filter @khedma/api prisma db push",
+    "db:migrate": "pnpm --filter @khedma/api prisma migrate dev",
+    "db:studio": "pnpm --filter @khedma/api prisma studio",
+    "db:seed": "pnpm --filter @khedma/api prisma db seed"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "prettier": "^3.1.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
