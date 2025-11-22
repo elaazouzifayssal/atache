@@ -21,7 +21,8 @@ services:
       POSTGRES_PASSWORD: khedma_password
       POSTGRES_DB: khedma
     ports:
-      - "5432:5432"
+      # Host port changed to 5433 to avoid conflict with a local Postgres instance
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

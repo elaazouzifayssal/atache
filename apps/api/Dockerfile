@@ -2,13 +2,20 @@
 # API Dockerfile - Khedma Backend
 # ================================
 
-# Development stage
-FROM node:18-alpine AS development
+# Development stage (Debian-based to support Prisma native engines)
+FROM node:18-bullseye-slim AS development
 
 WORKDIR /app
 
-# Install OpenSSL for Prisma compatibility
-RUN apk add --no-cache openssl openssl-dev libc6-compat
+# Install packages required by Prisma (libssl) and common build tools
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends \
+	ca-certificates \
+	openssl \
+	libssl1.1 \
+	build-essential \
+	python3 \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN npm install -g pnpm@8.15.0
@@ -39,12 +46,19 @@ CMD ["pnpm", "dev"]
 # ================================
 # Production build stage
 # ================================
-FROM node:18-alpine AS builder
+FROM node:18-bullseye-slim AS builder
 
 WORKDIR /app
 
-# Install OpenSSL for Prisma compatibility
-RUN apk add --no-cache openssl openssl-dev libc6-compat
+# Install packages required by Prisma (libssl) and common build tools
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends \
+	ca-certificates \
+	openssl \
+	libssl1.1 \
+	build-essential \
+	python3 \
+	&& rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g pnpm@8.15.0
 
@@ -65,12 +79,16 @@ RUN pnpm build
 # ================================
 # Production stage
 # ================================
-FROM node:18-alpine AS production
+FROM node:18-bullseye-slim AS production
 
 WORKDIR /app
 
-# Install OpenSSL for Prisma compatibility
-RUN apk add --no-cache openssl libc6-compat
+# Install libssl runtime for production image
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends \
+	ca-certificates \
+	libssl1.1 \
+	&& rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g pnpm@8.15.0
 
