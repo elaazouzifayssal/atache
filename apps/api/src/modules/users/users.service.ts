@@ -52,4 +52,37 @@ export class UsersService {
 
     return user;
   }
+
+  async getAddresses(userId: string) {
+    return this.prisma.address.findMany({
+      where: { userId },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  async createAddress(userId: string, data: {
+    label: string;
+    street: string;
+    city: string;
+    neighborhood?: string;
+    postalCode?: string;
+    latitude: number;
+    longitude: number;
+    isDefault?: boolean;
+  }) {
+    // If this is set as default, unset other defaults first
+    if (data.isDefault) {
+      await this.prisma.address.updateMany({
+        where: { userId, isDefault: true },
+        data: { isDefault: false },
+      });
+    }
+
+    return this.prisma.address.create({
+      data: {
+        userId,
+        ...data,
+      },
+    });
+  }
 }

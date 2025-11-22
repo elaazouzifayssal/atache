@@ -47,6 +47,7 @@ services:
       NODE_ENV: development
       DATABASE_URL: postgresql://khedma:khedma_password@postgres:5432/khedma
       JWT_SECRET: khedma-docker-jwt-secret-dev-2024
+      JWT_REFRESH_SECRET: khedma-docker-jwt-refresh-secret-dev-2024
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
       PORT: 3001
