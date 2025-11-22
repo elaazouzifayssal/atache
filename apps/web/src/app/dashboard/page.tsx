@@ -144,12 +144,22 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <Link
                 href="/profile"
-                className="w-8 h-8 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ring-2 ring-gray-200 hover:ring-red-300"
                 title="Voir mon profil"
               >
-                <span className="text-red-600 font-medium text-sm">
-                  {user?.firstName[0]}{user?.lastName[0]}
-                </span>
+                {(user as any)?.avatarUrl ? (
+                  <img
+                    src={(user as any).avatarUrl}
+                    alt={`${user?.firstName} ${user?.lastName}`}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center hover:from-red-500 hover:to-red-700 transition-colors">
+                    <span className="text-white font-bold text-sm">
+                      {user?.firstName?.[0]?.toUpperCase()}{user?.lastName?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
               </Link>
               <span className="text-gray-700 font-medium hidden sm:block">
                 {user?.firstName}

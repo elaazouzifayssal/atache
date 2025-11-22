@@ -79,6 +79,7 @@ export default function ProfilePage() {
         email: (user as any).email || '',
         city: user.city,
         selectedCompetences: (user as any).selectedCompetences || [],
+        avatarPreview: (user as any).avatarUrl || undefined,
       }));
 
       // Load existing helper profile if available
@@ -168,6 +169,11 @@ export default function ProfilePage() {
         email: formData.email,
         selectedCompetences: formData.selectedCompetences || [],
       };
+
+      // Include avatar URL if changed
+      if (formData.avatarPreview) {
+        payload.avatarUrl = formData.avatarPreview;
+      }
 
       // For helpers, include helper profile data and skills
       if (user?.role === 'HELPER') {
