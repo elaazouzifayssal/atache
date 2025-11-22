@@ -24,6 +24,7 @@ export interface User {
   neighborhood?: string | null;
   phoneVerified: boolean;
   emailVerified: boolean;
+  selectedCompetences: string[];
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt?: Date | null;

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
+import { CATEGORIES } from '@khedma/shared';
 
 interface Job {
   id: string;
@@ -74,10 +75,6 @@ export default function DashboardPage() {
     }
   };
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
   const handleLogout = () => {
     logout();
     router.push('/');
@@ -101,46 +98,76 @@ export default function DashboardPage() {
   const activeJobs = jobs.filter(j => !['COMPLETED', 'CANCELLED'].includes(j.status));
   const completedJobs = jobs.filter(j => j.status === 'COMPLETED');
 
+  const getCategoryEmoji = (slug: string): string => {
+    const emojis: Record<string, string> = {
+      menage: '🧹',
+      bricolage: '🔧',
+      'montage-meubles': '🪑',
+      jardinage: '🌱',
+      demenagement: '📦',
+      informatique: '💻',
+      'garde-enfants': '👶',
+      'cours-particuliers': '📚',
+      plomberie: '🔧',
+      electricite: '⚡',
+    };
+    return emojis[slug] || '🛠️';
+  };
+
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with red theme */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-primary">
+          <Link href="/" className="text-2xl font-bold text-red-600">
             Khedma
           </Link>
           <div className="flex items-center gap-4">
             {/* Notifications */}
-            <Link href="/notifications" className="relative p-2 text-gray-600 hover:text-primary">
+            <Link href="/notifications" className="relative p-2 text-gray-600 hover:text-red-600">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
               {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                   {unreadNotifications > 9 ? '9+' : unreadNotifications}
                 </span>
               )}
             </Link>
             {/* Messages */}
-            <Link href="/messages" className="p-2 text-gray-600 hover:text-primary">
+            <Link href="/messages" className="p-2 text-gray-600 hover:text-red-600">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </Link>
             {/* Profile */}
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-primary font-medium text-sm">
-                  {user.firstName[0]}{user.lastName[0]}
-                </span>
-              </div>
+              <Link
+                href="/profile"
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ring-2 ring-gray-200 hover:ring-red-300"
+                title="Voir mon profil"
+              >
+                {(user as any)?.avatarUrl ? (
+                  <img
+                    src={(user as any).avatarUrl}
+                    alt={`${user?.firstName} ${user?.lastName}`}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center hover:from-red-500 hover:to-red-700 transition-colors">
+                    <span className="text-white font-bold text-sm">
+                      {user?.firstName?.[0]?.toUpperCase()}{user?.lastName?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </Link>
               <span className="text-gray-700 font-medium hidden sm:block">
-                {user.firstName}
+                {user?.firstName}
               </span>
             </div>
             <button
               onClick={handleLogout}
-              className="text-gray-500 hover:text-primary text-sm"
+              className="text-gray-500 hover:text-red-600 text-sm"
             >
               Déconnexion
             </button>
@@ -153,18 +180,18 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Bonjour {user.firstName} !
+              Bonjour {user?.firstName} !
             </h1>
-            <p className="text-gray-600">
-              {user.role === 'CLIENT'
+            <p className="text-red-600">
+              {user?.role === 'CLIENT'
                 ? 'Gérez vos demandes de services'
                 : 'Trouvez des missions près de vous'}
             </p>
           </div>
-          {user.role === 'CLIENT' ? (
+          {user?.role === 'CLIENT' ? (
             <Link
               href="/jobs/new"
-              className="btn-primary flex items-center gap-2 justify-center"
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 justify-center transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -174,7 +201,7 @@ export default function DashboardPage() {
           ) : (
             <Link
               href="/jobs"
-              className="btn-primary flex items-center gap-2 justify-center"
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 justify-center transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -187,19 +214,49 @@ export default function DashboardPage() {
         {/* Loading State */}
         {loading && (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
           </div>
         )}
 
         {/* CLIENT View */}
-        {!loading && user.role === 'CLIENT' && (
+        {!loading && user?.role === 'CLIENT' && (
           <>
+            {/* Categories Section - Early in the layout */}
+            <section className="mb-8">
+              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                  <span className="mr-3">🛠️</span>
+                  Services disponibles
+                </h2>
+                <p className="text-gray-600">Cliquez sur une catégorie pour publier une demande</p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                {CATEGORIES.slice(0, 15).map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    href={`/jobs/new?category=${cat.slug}`}
+                    className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:scale-105 group"
+                  >
+                    <div className="p-4 text-center">
+                      <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-200">
+                        {getCategoryEmoji(cat.slug)}
+                      </div>
+                      <h4 className="font-bold text-gray-900 text-sm group-hover:text-red-600 transition-colors">
+                        {cat.nameFr}
+                      </h4>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
             {/* Active Jobs */}
             <section className="mb-8">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span>Mes demandes en cours</span>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-600">
+                <span>📋 Mes demandes en cours</span>
                 {activeJobs.length > 0 && (
-                  <span className="bg-primary/10 text-primary text-sm px-2 py-0.5 rounded-full">
+                  <span className="bg-red-100 text-red-800 text-sm px-2 py-0.5 rounded-full">
                     {activeJobs.length}
                   </span>
                 )}
@@ -209,7 +266,7 @@ export default function DashboardPage() {
                 <div className="card text-center py-8">
                   <div className="text-4xl mb-3">📋</div>
                   <p className="text-gray-500 mb-4">Aucune demande en cours</p>
-                  <Link href="/jobs/new" className="text-primary font-medium hover:underline">
+                  <Link href="/jobs/new" className="text-red-600 font-medium hover:underline">
                     Créer votre première demande
                   </Link>
                 </div>
@@ -225,7 +282,7 @@ export default function DashboardPage() {
                         <h3 className="font-medium text-gray-900">{job.title}</h3>
                         <p className="text-sm text-gray-500">{job.category?.nameFr}</p>
                         {job._count?.applications !== undefined && job._count.applications > 0 && (
-                          <p className="text-sm text-primary mt-1">
+                          <p className="text-sm text-red-600 mt-1">
                             {job._count.applications} candidature{job._count.applications > 1 ? 's' : ''}
                           </p>
                         )}
@@ -249,10 +306,10 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* Completed Jobs (to review) */}
+            {/* Completed Jobs */}
             {completedJobs.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold mb-4">Terminées</h2>
+                <h2 className="text-lg font-semibold mb-4 text-red-600">📂 Terminées</h2>
                 <div className="space-y-3">
                   {completedJobs.slice(0, 3).map((job) => (
                     <Link
@@ -276,14 +333,14 @@ export default function DashboardPage() {
         )}
 
         {/* HELPER View */}
-        {!loading && user.role === 'HELPER' && (
+        {!loading && user?.role === 'HELPER' && (
           <>
             {/* My Applications */}
             <section className="mb-8">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span>Mes candidatures</span>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-600">
+                <span>📋 Mes candidatures</span>
                 {jobs.length > 0 && (
-                  <span className="bg-primary/10 text-primary text-sm px-2 py-0.5 rounded-full">
+                  <span className="bg-red-100 text-red-800 text-sm px-2 py-0.5 rounded-full">
                     {jobs.length}
                   </span>
                 )}
@@ -293,7 +350,7 @@ export default function DashboardPage() {
                 <div className="card text-center py-8">
                   <div className="text-4xl mb-3">🔍</div>
                   <p className="text-gray-500 mb-4">Aucune candidature pour le moment</p>
-                  <Link href="/jobs" className="text-primary font-medium hover:underline">
+                  <Link href="/jobs" className="text-red-600 font-medium hover:underline">
                     Parcourir les jobs disponibles
                   </Link>
                 </div>
@@ -325,13 +382,13 @@ export default function DashboardPage() {
 
             {/* Find More Jobs CTA */}
             <section>
-              <div className="card bg-gradient-to-r from-primary/5 to-accent/5 border-none">
+              <div className="card bg-gradient-to-r from-red-50 to-pink-50 border-red-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Trouver plus de jobs</h3>
+                    <h3 className="font-semibold text-gray-900">🔍 Trouver plus de jobs</h3>
                     <p className="text-sm text-gray-600">Parcourez les nouvelles demandes</p>
                   </div>
-                  <Link href="/jobs" className="btn-primary">
+                  <Link href="/jobs" className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium transition-colors">
                     Voir les jobs
                   </Link>
                 </div>
