@@ -7,6 +7,9 @@ FROM node:18-alpine AS development
 
 WORKDIR /app
 
+# Install OpenSSL for Prisma compatibility
+RUN apk add --no-cache openssl openssl-dev libc6-compat
+
 # Install pnpm
 RUN npm install -g pnpm@8.15.0
 
@@ -40,6 +43,9 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Install OpenSSL for Prisma compatibility
+RUN apk add --no-cache openssl openssl-dev libc6-compat
+
 RUN npm install -g pnpm@8.15.0
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -62,6 +68,9 @@ RUN pnpm build
 FROM node:18-alpine AS production
 
 WORKDIR /app
+
+# Install OpenSSL for Prisma compatibility
+RUN apk add --no-cache openssl libc6-compat
 
 RUN npm install -g pnpm@8.15.0
 

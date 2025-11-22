@@ -6,14 +6,28 @@ This guide explains how to use Docker to run the Khedma project. Docker simplifi
 
 ## Prerequisites
 
-### Install Docker Desktop
+### Install Docker Desktop or Podman
 
-**macOS:**
+**Option A: Docker Desktop (macOS)**
 ```bash
 # Using Homebrew
 brew install --cask docker
 
 # Or download from https://www.docker.com/products/docker-desktop
+```
+
+**Option B: Podman Desktop (recommended - open source)**
+```bash
+# Using Homebrew
+brew install podman podman-compose
+brew install --cask podman-desktop
+
+# Start Podman machine
+podman machine init
+podman machine start
+
+# Enable Docker compatibility (use docker commands with podman)
+# In Podman Desktop: Settings → Docker Compatibility → Enable
 ```
 
 **Windows:**
@@ -32,8 +46,23 @@ sudo usermod -aG docker $USER
 ### Verify Installation
 
 ```bash
+# For Docker
 docker --version        # Docker version 24.x or higher
 docker compose version  # Docker Compose version v2.x
+
+# For Podman
+podman --version        # Podman version 4.x or higher
+podman-compose --version
+```
+
+### Using Podman instead of Docker
+
+If using Podman, replace `docker compose` with `podman compose`:
+```bash
+# Start services
+podman compose up
+
+# Or enable Docker compatibility in Podman Desktop and use docker commands
 ```
 
 ---
