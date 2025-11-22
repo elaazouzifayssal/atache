@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
-import { CATEGORIES } from '@khedma/shared';
 
 interface Job {
   id: string;
@@ -98,21 +97,6 @@ export default function DashboardPage() {
   const activeJobs = jobs.filter(j => !['COMPLETED', 'CANCELLED'].includes(j.status));
   const completedJobs = jobs.filter(j => j.status === 'COMPLETED');
 
-  const getCategoryEmoji = (slug: string): string => {
-    const emojis: Record<string, string> = {
-      menage: '🧹',
-      bricolage: '🔧',
-      'montage-meubles': '🪑',
-      jardinage: '🌱',
-      demenagement: '📦',
-      informatique: '💻',
-      'garde-enfants': '👶',
-      'cours-particuliers': '📚',
-      plomberie: '🔧',
-      electricite: '⚡',
-    };
-    return emojis[slug] || '🛠️';
-  };
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -211,36 +195,6 @@ export default function DashboardPage() {
         {/* CLIENT View */}
         {!loading && user?.role === 'CLIENT' && (
           <>
-            {/* Categories Section - Early in the layout */}
-            <section className="mb-8">
-              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
-                  <span className="mr-3">🛠️</span>
-                  Services disponibles
-                </h2>
-                <p className="text-gray-600">Cliquez sur une catégorie pour publier une demande</p>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-                {CATEGORIES.slice(0, 15).map((cat) => (
-                  <Link
-                    key={cat.slug}
-                    href={`/jobs/new?category=${cat.slug}`}
-                    className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:scale-105 group"
-                  >
-                    <div className="p-4 text-center">
-                      <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-200">
-                        {getCategoryEmoji(cat.slug)}
-                      </div>
-                      <h4 className="font-bold text-gray-900 text-sm group-hover:text-red-600 transition-colors">
-                        {cat.nameFr}
-                      </h4>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-
             {/* Active Jobs */}
             <section className="mb-8">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-600">
