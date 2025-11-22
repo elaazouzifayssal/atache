@@ -142,11 +142,15 @@ export default function DashboardPage() {
             </Link>
             {/* Profile */}
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+              <Link
+                href="/profile"
+                className="w-8 h-8 bg-red-100 hover:bg-red-200 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                title="Voir mon profil"
+              >
                 <span className="text-red-600 font-medium text-sm">
                   {user?.firstName[0]}{user?.lastName[0]}
                 </span>
-              </div>
+              </Link>
               <span className="text-gray-700 font-medium hidden sm:block">
                 {user?.firstName}
               </span>
