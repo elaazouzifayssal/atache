@@ -53,6 +53,7 @@ export default function ProfilePage() {
     workRadius: 10,
     isAvailable: true,
     avatarPreview: undefined as string | undefined,
+    selectedCompétences: [] as string[],
     skills: [] as { categoryId: string; category?: any; hourlyRate: number; serviceDescription?: string }[]
   });
 
@@ -81,6 +82,7 @@ export default function ProfilePage() {
         phone: user.phone,
         email: (user as any).email || '',
         city: user.city,
+        selectedCompétences: (user as any).selectedCompétences || [],
       }));
 
       // Load existing helper profile if available
@@ -168,6 +170,7 @@ export default function ProfilePage() {
         lastName: formData.lastName,
         city: formData.city,
         email: formData.email,
+        selectedCompétences: formData.selectedCompétences || [],
       };
 
       // For helpers, include helper profile data and skills
@@ -297,11 +300,173 @@ export default function ProfilePage() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Personal Information Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        {/* Personal Information Card */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 mb-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <span className="text-2xl">{ICONS.user}</span>
+            <h2 className="text-xl font-bold text-gray-900">Informations Personnelles</h2>
+          </div>
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 flex items-center">
+                  Prénom
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    className="input w-full"
+                  />
+                ) : (
+                  <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
+                    {formData.firstName || '(non défini)'}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 flex items-center">
+                  Nom
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    className="input w-full"
+                  />
+                ) : (
+                  <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
+                    {formData.lastName || '(non défini)'}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 flex items-center">
+                <span className="mr-2">{ICONS.phone}</span>
+                Téléphone
+              </label>
+              <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-600">
+                {formData.phone || '(non défini)'}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 flex items-center">
+                <span className="mr-2">{ICONS.email}</span>
+                Email
+              </label>
+              {isEditing ? (
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="input w-full"
+                  placeholder="votre@email.com"
+                />
+              ) : (
+                <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
+                  {formData.email || '(non défini)'}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 flex items-center">
+                <span className="mr-2">{ICONS.location}</span>
+                Ville de travail
+              </label>
+              {isEditing ? (
+                <select
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  className="input w-full"
+                >
+                  {MAROCCAN_CITIES.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl text-gray-900 font-medium">
+                  {formData.city || 'Casablanca'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* My Competences Section - What I'm Good At */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+          <div className="flex items-center space-x-3 mb-6">
+            <span className="text-2xl">{ICONS.skills}</span>
+            <h2 className="text-xl font-bold text-gray-900">Mes Compétences</h2>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center">
+                <span className="mr-2">💪</span>
+                Ce que je maîtrise (sélectionnez vos compétences)
+              </label>
+
+              {isEditing ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {categories.map((category) => (
+                    <label key={category.id} className="flex items-center space-x-2 p-3 border border-gray-200 rounded-lg hover:border-red-300 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.selectedCompétences?.includes(category.id) || false}
+                        onChange={(e) => {
+                          const newCompétences = e.target.checked
+                            ? [...(formData.selectedCompétences || []), category.id]
+                            : (formData.selectedCompétences || []).filter(id => id !== category.id);
+                          handleInputChange('selectedCompétences', newCompétences);
+                        }}
+                        className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">{category.nameFr}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gradient-to-r from-red-50 to-pink-50 p-4 rounded-xl border border-red-200">
+                  {formData.selectedCompétences && formData.selectedCompétences.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.selectedCompétences.map((categoryId) => {
+                        const category = categories.find(cat => cat.id === categoryId);
+                        return category ? (
+                          <span
+                            key={categoryId}
+                            className="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full"
+                          >
+                            {category.nameFr}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center text-red-600 font-medium">
+                      Aucune compétence sélectionnée
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Professional Information Card */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
             <div className="flex items-center space-x-3 mb-6">
-              <span className="text-2xl">{ICONS.user}</span>
-              <h2 className="text-xl font-bold text-gray-900">Informations Personnelles</h2>
+              <span className="text-2xl">{ICONS.skills}</span>
+              <h2 className="text-xl font-bold text-gray-900">Informations Professionnelles</h2>
             </div>
 
             <div className="space-y-6">
