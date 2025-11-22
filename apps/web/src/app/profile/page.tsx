@@ -209,8 +209,8 @@ export default function ProfilePage() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-6">
-          <Link href="/" className="text-red-600 hover:underline text-sm mb-4 inline-block">
-            ← Retour à l'accueil
+          <Link href="/dashboard" className="text-red-600 hover:underline text-sm mb-4 inline-block">
+            ← Retour au tableau de bord
           </Link>
           <div className="flex justify-between items-center mb-4">
             <div>
