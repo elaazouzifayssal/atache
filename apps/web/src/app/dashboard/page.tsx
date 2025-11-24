@@ -22,12 +22,19 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Wait for Zustand to rehydrate before checking auth
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Only check auth after hydration is complete
+    if (isHydrated && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isHydrated, router]);
 
   useEffect(() => {
     if (isAuthenticated && user?.role === 'CLIENT') {
