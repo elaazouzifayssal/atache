@@ -53,6 +53,22 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // After rehydration, sync tokens from localStorage to store
+        if (state && typeof window !== 'undefined') {
+          const accessToken = localStorage.getItem('accessToken');
+          const refreshToken = localStorage.getItem('refreshToken');
+
+          if (accessToken && refreshToken) {
+            state.accessToken = accessToken;
+            state.refreshToken = refreshToken;
+            state.isAuthenticated = true;
+          } else {
+            state.isAuthenticated = false;
+            state.user = null;
+          }
+        }
+      },
     }
   )
 );
