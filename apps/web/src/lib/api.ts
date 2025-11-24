@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
@@ -8,6 +9,20 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: any) => void; reject: (reason?: any) => void }> = [];
+
+const processQueue = (error: any = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
 
 // Request interceptor to add auth token
 api.interceptors.request.use((config) => {
@@ -26,21 +41,63 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Don't intercept 401s from auth endpoints to avoid infinite loops
+    if (originalRequest.url?.includes('/auth/')) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            originalRequest.headers.Authorization = `Bearer ${localStorage.getItem('accessToken')}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (!refreshToken) {
+        isRefreshing = false;
+        processQueue(error);
+        localStorage.removeItem('accessToken');
+        return Promise.reject(error);
+      }
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
-          localStorage.setItem('accessToken', data.accessToken);
-          originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
-          return api(originalRequest);
+        const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        localStorage.setItem('accessToken', data.accessToken);
+        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+
+        processQueue(null);
+        isRefreshing = false;
+
+        return api(originalRequest);
+      } catch (refreshError: any) {
+        processQueue(refreshError);
+        isRefreshing = false;
+
+        // Only clear auth if refresh token is truly invalid (not network errors)
+        const isRefreshAuthError = refreshError?.response?.status === 401 || refreshError?.response?.status === 403;
+
+        if (isRefreshAuthError) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+
+          // Trigger logout in auth store to sync state
+          setTimeout(() => {
+            useAuthStore.getState().logout();
+          }, 0);
         }
-      } catch {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+
+        return Promise.reject(refreshError);
       }
     }
 
